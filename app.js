@@ -1,6 +1,5 @@
 const express = require('express');
 const expressWs = require('express-ws');
-const uuid = require('uuid');
 
 const app = express();
 expressWs(app);
@@ -17,6 +16,11 @@ let timeout;
 const convertKana = (char) => {
   const kanaMap = {'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ'};
   return kanaMap[char] || char;
+};
+
+// Generate unique ID
+const generateId = () => {
+  return `${Math.random().toString(36).substr(2, 9)}-${Date.now()}`;
 };
 
 // Validate word
@@ -38,7 +42,7 @@ const validateWord = (word) => {
 
 // Handle client connection
 app.ws('/shiritory', (ws, req) => {
-  const id = uuid.v4();
+  const id = generateId();
   clients.push({id, ws});
   ws.send(JSON.stringify({type: 'system', message: 'しりとりゲーム開始まで\n3\n2\n1\nスタート'}));
 
