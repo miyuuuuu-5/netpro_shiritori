@@ -83,6 +83,11 @@ app.ws('/shiritory', (ws, req) => {
   });
 });
 
+// Add a route to handle GET requests to the root URL
+app.get('/', (req, res) => {
+  res.send('しりとりゲームへようこそ！');
+});
+
 const nextTurn = () => {
   clearTimeout(timeout);
   currentTurn = (currentTurn + 1) % clients.length;
