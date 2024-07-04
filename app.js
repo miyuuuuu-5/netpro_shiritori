@@ -11,6 +11,7 @@ let currentTurn = 0;
 let wordLength = 3; // Default word length
 let responseTime = 30 * 1000; // Default response time in ms
 let timeout;
+let gameStarted = false; // ゲームが開始されたかどうかを管理
 
 // Convert small kana to large kana
 const convertKana = (char) => {
@@ -31,8 +32,10 @@ const validateWord = (word) => {
   if (word.length !== wordLength) {
     return `文字数が違います。${wordLength}文字の単語を入力してください。`;
   }
-  if (currentWord && word[0] !== convertKana(currentWord.slice(-1))) {
-    return `「${currentWord.slice(-1)}」で始まる単語を入力してください。`;
+  const lastChar = currentWord.slice(-1);
+  const nextChar = (lastChar === 'ー') ? currentWord.slice(-2, -1) : lastChar;
+  if (currentWord && word[0] !== convertKana(nextChar)) {
+    return `「${convertKana(nextChar)}」で始まる単語を入力してください。`;
   }
   if (word.slice(-1) === 'ん') {
     return '「ん」で終わる単語を言ったため敗北です。';
@@ -44,15 +47,20 @@ const validateWord = (word) => {
 app.ws('/shiritory', (ws, req) => {
   const id = generateId();
   clients.push({id, ws});
-  ws.send(JSON.stringify({type: 'system', message: 'しりとりゲーム開始まで\n3\n2\n1\nスタート'}));
-
-  if (clients.length === 1) {
-    nextTurn();
-  }
+  ws.send(JSON.stringify({type: 'system', message: 'しりとりゲームに接続されました'}));
 
   ws.on('message', (msg) => {
     const message = JSON.parse(msg);
-    if (message.type === 'word') {
+
+    if (message.type === 'start') {
+      if (!gameStarted) {
+        gameStarted = true;
+        broadcast({type: 'system', message: 'しりとりゲーム開始まで\n3\n2\n1\nスタート'});
+        nextTurn();
+      }
+    }
+
+    if (message.type === 'word' && gameStarted) {
       if (clients[currentTurn].id !== id) {
         ws.send(JSON.stringify({type: 'system', message: '現在のプレイヤーの順番ではありません'}));
         return;
@@ -80,7 +88,9 @@ const nextTurn = () => {
   currentTurn = (currentTurn + 1) % clients.length;
   wordLength = Math.floor(Math.random() * 5) + 2; // Random word length between 2 and 6
   const player = clients[currentTurn].id;
-  broadcast({type: 'system', message: `頭文字「${convertKana(currentWord.slice(-1))}」文字数「${wordLength}」 プレイヤーの順番: ${player}`});
+  const lastChar = currentWord.slice(-1);
+  const nextChar = (lastChar === 'ー') ? currentWord.slice(-2, -1) : lastChar;
+  broadcast({type: 'system', message: `頭文字「${convertKana(nextChar)}」文字数「${wordLength}」 プレイヤーの順番: ${player}`});
   timeout = setTimeout(() => {
     broadcast({type: 'system', message: `プレイヤー${player}は時間切れで敗北です。`});
     process.exit(); // or any other logic to handle game end
