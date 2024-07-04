@@ -36,11 +36,20 @@
             background: #eee;
             cursor: pointer;
         }
+
+        .start {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #eee;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
 <body>
     <div class="chat">
+        <button class="start">ゲーム開始</button>
         <ul class="messages"></ul>
         <form class="form">
             <input class="input" autocomplete="off" />
@@ -50,41 +59,47 @@
 
     <script>
         function main() {
-            const host = location.origin.replace(/^http/, 'ws')
-            const ws = new WebSocket(host + '/ws')
-            const myId = self.crypto.randomUUID().substr(0, 8)
+            const host = location.origin.replace(/^http/, 'ws');
+            const ws = new WebSocket(host + '/shiritory');
+            const myId = self.crypto.randomUUID().substr(0, 8);
 
-            const form = document.querySelector('.form')
+            const form = document.querySelector('.form');
+            const startButton = document.querySelector('.start');
+            const input = document.querySelector('.input');
+            const messageList = document.querySelector('.messages');
 
             form.onsubmit = function (e) {
-                e.preventDefault()
-                const input = document.querySelector('.input')
-                const text = input.value
-                ws.send(JSON.stringify({ id: myId, text }))
-                input.value = ''
-                input.focus()
-            }
+                e.preventDefault();
+                const text = input.value.trim();
+                if (text) {
+                    ws.send(JSON.stringify({ type: 'word', word: text }));
+                    input.value = '';
+                    input.focus();
+                }
+            };
+
+            startButton.addEventListener('click', () => {
+                ws.send(JSON.stringify({ type: 'start' }));
+            });
 
             ws.onmessage = function (msg) {
-                const response = msg.data
-                const { id, text } = JSON.parse(msg.data)
-                const messageList = document.querySelector('.messages')
-                const li = document.createElement('li')
+                const response = JSON.parse(msg.data);
+                const li = document.createElement('li');
 
-                if (id === myId) {
-                    li.textContent = `(${id})自分:` + text
+                if (response.type === 'system') {
+                    li.textContent = `システム: ${response.message}`;
                 } else {
-                    li.textContent = id + ': ' + text
+                    li.textContent = `${response.player}: ${response.word}`;
                 }
-                messageList.appendChild(li)
-            }
+                messageList.appendChild(li);
+            };
 
             ws.onerror = function (error) {
-                console.error('WebSocket Error: ', error)
-            }
+                console.error('WebSocket Error: ', error);
+            };
         }
 
-        main()
+        main();
     </script>
 </body>
 
