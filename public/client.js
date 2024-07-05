@@ -2,17 +2,24 @@ function main() {
     const host = location.origin.replace(/^http/, 'ws');
     const ws = new WebSocket(host + '/ws');
     const form = document.querySelector('.form');
+    const input = document.querySelector('.input');
     const startGameButton = document.getElementById('start-game');
     const timeoutInput = document.getElementById('timeout');
 
     form.onsubmit = function (e) {
         e.preventDefault();
-        const input = document.querySelector('.input');
         const text = input.value;
         ws.send(JSON.stringify({ type: 'word', word: text }));
         input.value = '';
         input.focus();
     };
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            form.onsubmit(e);
+        }
+    });
 
     ws.onmessage = function (msg) {
         const response = JSON.parse(msg.data);
