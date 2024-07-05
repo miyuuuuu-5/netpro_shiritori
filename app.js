@@ -34,7 +34,7 @@ function getRandomHiragana() {
 function startNewTurn() {
     clearTimeout(currentTimeout);
     const player = players[turnIndex];
-    player.ws.send(JSON.stringify({ type: 'turn', message: `Your turn! Start with "${initialChar}".` }));
+    player.ws.send(JSON.stringify({ type: 'turn', message: `Your turn, ${player.name}! Start with "${initialChar}".` }));
     currentTimeout = setTimeout(() => {
         player.ws.send(JSON.stringify({ type: 'system', message: 'You lost! Time out.' }));
         players = players.filter(p => p !== player);
@@ -52,13 +52,14 @@ function broadcast(message) {
 }
 
 wss.on('connection', (ws) => {
-    const player = { ws, id: Math.random().toString(36).substr(2, 9), timeout: 30000 }; // Default 30 seconds
+    const player = { ws, id: Math.random().toString(36).substr(2, 9), timeout: 30000, name: '' }; // Default 30 seconds and empty name
     players.push(player);
 
     ws.on('message', (message) => {
         const data = JSON.parse(message);
 
         if (data.type === 'start') {
+            player.name = data.name || 'Player'; // Set player name
             player.timeout = data.timeout;
             initialChar = getRandomHiragana();
             broadcast({ type: 'system', message: `Game starting with initial character "${initialChar}". Timeout is ${player.timeout / 1000} seconds.` });
@@ -96,7 +97,7 @@ wss.on('connection', (ws) => {
                 return;
             }
             usedWords.add(word);
-            broadcast({ type: 'word', player: player.id, word });
+            broadcast({ type: 'word', player: player.name, word });
             turnIndex = (turnIndex + 1) % players.length;
             startNewTurn();
         }

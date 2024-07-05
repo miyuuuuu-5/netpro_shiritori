@@ -5,7 +5,6 @@ function main() {
     const input = document.querySelector('.input');
     const startGameButton = document.getElementById('start-game');
     const timeoutInput = document.getElementById('timeout');
-    const nameInput = document.getElementById('name');
 
     form.onsubmit = function (e) {
         e.preventDefault();
@@ -48,12 +47,7 @@ function main() {
             return;
         }
         timeout = timeout * 1000; // 秒をミリ秒に変換
-        const name = nameInput.value.trim();
-        if (!name) {
-            alert('Please enter your name.');
-            return;
-        }
-        ws.send(JSON.stringify({ type: 'start', timeout, name }));
+        ws.send(JSON.stringify({ type: 'start', timeout }));
     };
 }
 
