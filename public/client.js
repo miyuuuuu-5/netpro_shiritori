@@ -22,7 +22,7 @@ function main() {
       } else if (response.type === 'word') {
           li.textContent = `${response.player}: ${response.word}`;
       } else if (response.type === 'turn') {
-          li.textContent = `あなたの番です。頭文字は「${response.firstChar}」です。`;
+          li.textContent = response.message;
       }
       messageList.appendChild(li);
   };

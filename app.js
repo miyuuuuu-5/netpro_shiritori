@@ -44,6 +44,11 @@ const getLastChar = (word) => {
     return lastChar;
 };
 
+const getRandomHiragana = () => {
+    const hiragana = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
+    return hiragana[Math.floor(Math.random() * hiragana.length)];
+};
+
 wss.on('connection', (ws) => {
     ws.id = clients.length;
     clients.push(ws);
@@ -54,14 +59,21 @@ wss.on('connection', (ws) => {
             if (!gameStarted) {
                 gameStarted = true;
                 usedWords = [];
-                firstChar = 'し';
+                firstChar = getRandomHiragana();
                 wss.clients.forEach(client => {
                     if (client.readyState === WebSocket.OPEN) {
                         client.send(JSON.stringify({ type: 'system', message: 'しりとりゲーム開始まで' }));
                         setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '3' })), 1000);
                         setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '2' })), 2000);
                         setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '1' })), 3000);
-                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: 'スタート', firstChar })), 4000);
+                        setTimeout(() => {
+                            client.send(JSON.stringify({ type: 'system', message: 'スタート', firstChar }));
+                            if (client.id === currentPlayer) {
+                                client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。` }));
+                            } else {
+                                client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
+                            }
+                        }, 4000);
                     }
                 });
             }
@@ -97,7 +109,9 @@ wss.on('connection', (ws) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'word', player: `プレイヤー${ws.id}`, word }));
                     if (client.id === currentPlayer) {
-                        client.send(JSON.stringify({ type: 'turn', firstChar }));
+                        client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。` }));
+                    } else {
+                        client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
                     }
                 }
             });
