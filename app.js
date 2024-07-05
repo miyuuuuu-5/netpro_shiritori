@@ -17,8 +17,18 @@ const smallToLargeMap = {
     'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'っ': 'つ'
 };
 
+const excludedChars = ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ゃ', 'ゅ', 'ょ', 'っ', 'ー'];
+
 function normalizeChar(char) {
     return smallToLargeMap[char] || char;
+}
+
+function getRandomHiragana() {
+    let char;
+    do {
+        char = String.fromCharCode(12353 + Math.floor(Math.random() * 83));
+    } while (excludedChars.includes(char));
+    return char;
 }
 
 function startNewTurn() {
@@ -50,7 +60,7 @@ wss.on('connection', (ws) => {
 
         if (data.type === 'start') {
             player.timeout = data.timeout;
-            initialChar = String.fromCharCode(12353 + Math.floor(Math.random() * 83)); // Random hiragana
+            initialChar = getRandomHiragana();
             broadcast({ type: 'system', message: `Game starting with initial character "${initialChar}". Timeout is ${player.timeout / 1000} seconds.` });
             turnIndex = 0;
             startNewTurn();
