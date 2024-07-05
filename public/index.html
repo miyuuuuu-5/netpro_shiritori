@@ -38,12 +38,13 @@
             cursor: pointer;
         }
 
-        .start {
+        .start, .entry {
             padding: 10px;
             border: 1px solid #ccc;
             background-color: #007bff;
             color: white;
             cursor: pointer;
+            margin-top: 5px;
         }
 
         .timeout {
@@ -63,6 +64,7 @@
         </div>
         <div>
             <input id="name" class="input" type="text" placeholder="Your name" />
+            <button id="entry" class="entry">Entry</button>
             <input id="timeout" class="timeout" type="number" placeholder="Timeout (sec)" />
             <button id="start-game" class="start">Start Game</button>
         </div>

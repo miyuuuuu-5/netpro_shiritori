@@ -52,20 +52,31 @@ function broadcast(message) {
 }
 
 wss.on('connection', (ws) => {
-    const player = { ws, id: Math.random().toString(36).substr(2, 9), timeout: 30000, name: '' }; // Default 30 seconds and empty name
+    const player = { ws, id: Math.random().toString(36).substr(2, 9), timeout: 30000, name: '', isEntered: false }; // Default 30 seconds, empty name, and not entered
     players.push(player);
 
     ws.on('message', (message) => {
         const data = JSON.parse(message);
 
-        if (data.type === 'start') {
-            player.name = data.name || 'Player'; // Set player name
+        if (data.type === 'entry') {
+            player.name = data.name;
+            player.isEntered = true;
+            broadcast({ type: 'system', message: `${player.name} has entered the game.` });
+        } else if (data.type === 'start') {
+            if (!player.isEntered) {
+                ws.send(JSON.stringify({ type: 'system', message: 'You need to enter the game first.' }));
+                return;
+            }
             player.timeout = data.timeout;
             initialChar = getRandomHiragana();
             broadcast({ type: 'system', message: `Game starting with initial character "${initialChar}". Timeout is ${player.timeout / 1000} seconds.` });
             turnIndex = 0;
             startNewTurn();
         } else if (data.type === 'word') {
+            if (!player.isEntered) {
+                ws.send(JSON.stringify({ type: 'system', message: 'You need to enter the game first.' }));
+                return;
+            }
             const word = data.word.trim();
             if (!/^[ぁ-ゖー]+$/.test(word)) {
                 ws.send(JSON.stringify({ type: 'system', message: 'Words must be in hiragana only.' }));
@@ -110,7 +121,6 @@ wss.on('connection', (ws) => {
         }
     });
 });
-
 
 const server = app.listen(3000, () => console.log('Listening on port 3000'));
 server.on('upgrade', (request, socket, head) => {

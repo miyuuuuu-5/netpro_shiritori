@@ -6,6 +6,7 @@ function main() {
     const startGameButton = document.getElementById('start-game');
     const timeoutInput = document.getElementById('timeout');
     const nameInput = document.getElementById('name');
+    const entryButton = document.getElementById('entry');
 
     form.onsubmit = function (e) {
         e.preventDefault();
@@ -41,6 +42,15 @@ function main() {
         console.error('WebSocket Error: ', error);
     };
 
+    entryButton.onclick = function () {
+        const name = nameInput.value.trim();
+        if (!name) {
+            alert('Please enter your name.');
+            return;
+        }
+        ws.send(JSON.stringify({ type: 'entry', name }));
+    };
+
     startGameButton.onclick = function () {
         let timeout = parseInt(timeoutInput.value);
         if (isNaN(timeout) || timeout <= 0) {
@@ -48,12 +58,7 @@ function main() {
             return;
         }
         timeout = timeout * 1000; // 秒をミリ秒に変換
-        const name = nameInput.value.trim();
-        if (!name) {
-            alert('Please enter your name.');
-            return;
-        }
-        ws.send(JSON.stringify({ type: 'start', timeout, name }));
+        ws.send(JSON.stringify({ type: 'start', timeout }));
     };
 }
 
