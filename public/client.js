@@ -7,6 +7,7 @@ function main() {
     const timeoutInput = document.getElementById('timeout');
     const nameInput = document.getElementById('name');
     const entryButton = document.getElementById('entry');
+    const submitButton = document.querySelector('.submit'); // 追加
 
     form.onsubmit = function (e) {
         e.preventDefault();
@@ -22,6 +23,11 @@ function main() {
             form.onsubmit(e);
         }
     });
+
+    submitButton.onclick = function (e) { // 追加
+        e.preventDefault();
+        form.onsubmit(e);
+    };
 
     ws.onmessage = function (msg) {
         const response = JSON.parse(msg.data);
