@@ -2,6 +2,16 @@ function main() {
   const host = location.origin.replace(/^http/, 'ws');
   const ws = new WebSocket(host + '/ws');
   const form = document.querySelector('.form');
+  const startGame = (timeLimit) => {
+    socket.send(JSON.stringify({ type: 'start', timeLimit }));
+};
+
+// ゲーム開始ボタンのイベントリスナー
+document.getElementById('startGameButton').addEventListener('click', () => {
+    const timeLimit = parseInt(document.getElementById('timeLimitInput').value) || 30;
+    startGame(timeLimit);
+});
+
 
   form.onsubmit = function (e) {
       e.preventDefault();

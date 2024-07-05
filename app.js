@@ -21,6 +21,9 @@ let currentPlayer = 0;
 let gameStarted = false;
 let firstChar = '';
 
+let timer;
+let timeLimit = 30; // デフォルトの制限時間を30秒に設定
+
 const kanaToHiragana = (kana) => {
     return kana.replace(/[\u30a1-\u30f6]/g, match => {
         const chr = match.charCodeAt(0) - 0x60;
@@ -49,9 +52,87 @@ const getRandomHiragana = () => {
     return hiragana[Math.floor(Math.random() * hiragana.length)];
 };
 
+const setTimer = (ws) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        ws.send(JSON.stringify({ type: 'system', message: '時間切れです。敗北です。' }));
+        gameStarted = false;
+    }, timeLimit * 1000);
+};
+
 wss.on('connection', (ws) => {
     ws.id = clients.length;
     clients.push(ws);
+
+    ws.on('message', (message) => {
+        const msg = JSON.parse(message);
+        if (msg.type === 'start') {
+            if (!gameStarted) {
+                gameStarted = true;
+                usedWords = [];
+                firstChar = getRandomHiragana();
+                timeLimit = msg.timeLimit || 30; // クライアントからの制限時間を受け取る
+    
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ type: 'system', message: 'しりとりゲーム開始まで' }));
+                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '3' })), 1000);
+                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '2' })), 2000);
+                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '1' })), 3000);
+                        setTimeout(() => {
+                            client.send(JSON.stringify({ type: 'system', message: 'スタート', firstChar, timeLimit }));
+                            if (client.id === currentPlayer) {
+                                client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。制限時間は${timeLimit}秒です。` }));
+                                setTimer(client);
+                            } else {
+                                client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
+                            }
+                        }, 4000);
+                    }
+                });
+            }
+        } else if (msg.type === 'word') {
+            if (ws.id !== currentPlayer) {
+                ws.send(JSON.stringify({ type: 'system', message: 'あなたの順番ではありません' }));
+                return;
+            }
+    
+            const word = normalizeWord(msg.word);
+            if (usedWords.includes(word)) {
+                ws.send(JSON.stringify({ type: 'system', message: 'その言葉は一度使われています' }));
+                return;
+            }
+    
+            if (word[0] !== firstChar) {
+                ws.send(JSON.stringify({ type: 'system', message: `頭文字は${firstChar}でなければなりません` }));
+                return;
+            }
+    
+            const lastChar = getLastChar(word);
+            if (lastChar === 'ん') {
+                ws.send(JSON.stringify({ type: 'system', message: '「ん」で終わる言葉を言ったので敗北です' }));
+                gameStarted = false;
+                return;
+            }
+    
+            usedWords.push(word);
+            currentPlayer = (currentPlayer + 1) % clients.length;
+            firstChar = lastChar;
+    
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: 'word', player: `プレイヤー${ws.id}`, word }));
+                    if (client.id === currentPlayer) {
+                        client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。制限時間は${timeLimit}秒です。` }));
+                        setTimer(client);
+                    } else {
+                        client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
+                    }
+                }
+            });
+        }
+    });
+    
 
     ws.on('message', (message) => {
         const msg = JSON.parse(message);
