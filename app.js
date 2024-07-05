@@ -1,154 +1,100 @@
-const express = require('express');
-const http = require('http');
 const WebSocket = require('ws');
+const express = require('express');
 const path = require('path');
-
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
-const port = process.env.PORT || 3000;
+const wss = new WebSocket.Server({ noServer: true });
+let players = [];
+let turnIndex = 0;
+let currentTimeout = null;
+let usedWords = new Set();
+let initialChar = 'し'; // Default initial character
+let wordLength = 2; // Default word length
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+function startNewTurn() {
+    clearTimeout(currentTimeout);
+    const player = players[turnIndex];
+    player.ws.send(JSON.stringify({ type: 'turn', message: `Your turn! Start with "${initialChar}".` }));
+    currentTimeout = setTimeout(() => {
+        player.ws.send(JSON.stringify({ type: 'system', message: 'You lost! Time out.' }));
+        players = players.filter(p => p !== player);
+        if (players.length > 1) {
+            turnIndex = turnIndex % players.length;
+            startNewTurn();
+        } else {
+            broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
+        }
+    }, player.timeout);
+}
 
-let clients = [];
-let usedWords = [];
-let currentPlayer = 0;
-let gameStarted = false;
-let firstChar = '';
-let turnTimer;
-let turnTimeout = 30000; // デフォルトの制限時間を30秒に設定
-
-const kanaToHiragana = (kana) => {
-    return kana.replace(/[\u30a1-\u30f6]/g, match => {
-        const chr = match.charCodeAt(0) - 0x60;
-        return String.fromCharCode(chr);
-    });
-};
-
-const normalizeWord = (word) => {
-    const normalized = kanaToHiragana(word).replace(/[ぁぃぅぇぉゃゅょっ]/g, char => {
-        const map = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'っ': 'つ' };
-        return map[char] || char;
-    });
-    return normalized;
-};
-
-const getLastChar = (word) => {
-    let lastChar = word.slice(-1);
-    if (lastChar === 'ー') {
-        lastChar = word.slice(-2, -1);
-    }
-    return lastChar;
-};
-
-const getRandomHiragana = () => {
-    const hiragana = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
-    return hiragana[Math.floor(Math.random() * hiragana.length)];
-};
-
-const startTurnTimer = () => {
-    clearTimeout(turnTimer);
-    turnTimer = setTimeout(() => {
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                if (client.id === currentPlayer) {
-                    client.send(JSON.stringify({ type: 'system', message: '時間切れです。あなたの負けです。' }));
-                } else {
-                    client.send(JSON.stringify({ type: 'system', message: `プレイヤー${currentPlayer}が時間切れです。` }));
-                }
-            }
-        });
-        gameStarted = false;
-        clearTimeout(turnTimer);
-    }, turnTimeout);
-};
+function broadcast(message) {
+    players.forEach(player => player.ws.send(JSON.stringify(message)));
+}
 
 wss.on('connection', (ws) => {
-    ws.id = clients.length;
-    clients.push(ws);
+    const player = { ws, id: Math.random().toString(36).substr(2, 9), timeout: 30000 }; // Default 30 seconds
+    players.push(player);
 
     ws.on('message', (message) => {
-        const msg = JSON.parse(message);
-        if (msg.type === 'start') {
-            if (!gameStarted) {
-                gameStarted = true;
-                usedWords = [];
-                firstChar = getRandomHiragana();
-                turnTimeout = msg.timeout || turnTimeout;
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({ type: 'system', message: 'しりとりゲーム開始まで' }));
-                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '3' })), 1000);
-                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '2' })), 2000);
-                        setTimeout(() => client.send(JSON.stringify({ type: 'system', message: '1' })), 3000);
-                        setTimeout(() => {
-                            client.send(JSON.stringify({ type: 'system', message: 'スタート', firstChar }));
-                            if (client.id === currentPlayer) {
-                                client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。` }));
-                            } else {
-                                client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
-                            }
-                            startTurnTimer();
-                        }, 4000);
-                    }
-                });
-            }
-        } else if (msg.type === 'word') {
-            if (ws.id !== currentPlayer) {
-                ws.send(JSON.stringify({ type: 'system', message: 'あなたの順番ではありません' }));
+        const data = JSON.parse(message);
+
+        if (data.type === 'start') {
+            player.timeout = data.timeout;
+            initialChar = String.fromCharCode(12353 + Math.floor(Math.random() * 83)); // Random hiragana
+            broadcast({ type: 'system', message: `Game starting with initial character "${initialChar}". Timeout is ${player.timeout / 1000} seconds.` });
+            turnIndex = 0;
+            startNewTurn();
+        } else if (data.type === 'word') {
+            const word = data.word.trim();
+            if (!/^[ぁ-ゖ]+$/.test(word)) {
+                ws.send(JSON.stringify({ type: 'system', message: 'Words must be in hiragana only.' }));
                 return;
             }
-
-            const word = normalizeWord(msg.word);
-            if (usedWords.includes(word)) {
-                ws.send(JSON.stringify({ type: 'system', message: 'その言葉は一度使われています' }));
+            if (usedWords.has(word)) {
+                ws.send(JSON.stringify({ type: 'system', message: 'This word has already been used.' }));
                 return;
             }
-
-            if (word[0] !== firstChar) {
-                ws.send(JSON.stringify({ type: 'system', message: `頭文字は${firstChar}でなければなりません` }));
+            const lastChar = initialChar;
+            const firstChar = word.charAt(0);
+            if (firstChar !== lastChar) {
+                ws.send(JSON.stringify({ type: 'system', message: `Word must start with "${lastChar}".` }));
                 return;
             }
-
-            const lastChar = getLastChar(word);
-            if (lastChar === 'ん') {
-                ws.send(JSON.stringify({ type: 'system', message: '「ん」で終わる言葉を言ったので敗北です' }));
-                gameStarted = false;
-                clearTimeout(turnTimer);
-                return;
+            initialChar = word.slice(-1);
+            if (initialChar === 'ー') {
+                initialChar = word.slice(-2, -1);
             }
-
-            usedWords.push(word);
-            currentPlayer = (currentPlayer + 1) % clients.length;
-            firstChar = lastChar;
-
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({ type: 'word', player: `プレイヤー${ws.id}`, word }));
-                    if (client.id === currentPlayer) {
-                        client.send(JSON.stringify({ type: 'turn', message: `あなたの番です。頭文字は「${firstChar}」です。` }));
-                    } else {
-                        client.send(JSON.stringify({ type: 'turn', message: `プレイヤー${currentPlayer}の番です。頭文字は「${firstChar}」です。` }));
-                    }
+            if (initialChar === 'ん') {
+                ws.send(JSON.stringify({ type: 'system', message: 'You lost! Your word ended with "ん".' }));
+                players = players.filter(p => p !== player);
+                if (players.length > 1) {
+                    turnIndex = turnIndex % players.length;
+                    startNewTurn();
+                } else {
+                    broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
                 }
-            });
-            startTurnTimer();
+                return;
+            }
+            usedWords.add(word);
+            broadcast({ type: 'word', player: player.id, word });
+            turnIndex = (turnIndex + 1) % players.length;
+            startNewTurn();
         }
     });
 
     ws.on('close', () => {
-        clients = clients.filter(client => client !== ws);
-        if (clients.length === 0) {
-            gameStarted = false;
+        players = players.filter(p => p.ws !== ws);
+        if (players.length === 0) {
+            clearTimeout(currentTimeout);
         }
     });
 });
 
-server.listen(port, () => {
-    console.log(`Server is listening on ${port}`);
+const server = app.listen(3000, () => console.log('Listening on port 3000'));
+server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
 });

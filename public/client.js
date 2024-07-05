@@ -41,7 +41,12 @@ function main() {
     };
 
     startGameButton.onclick = function () {
-        const timeout = parseInt(timeoutInput.value) * 1000; // 秒をミリ秒に変換
+        let timeout = parseInt(timeoutInput.value);
+        if (isNaN(timeout) || timeout <= 0) {
+            alert('Please enter a valid positive number for the timeout.');
+            return;
+        }
+        timeout = timeout * 1000; // 秒をミリ秒に変換
         ws.send(JSON.stringify({ type: 'start', timeout }));
     };
 }
