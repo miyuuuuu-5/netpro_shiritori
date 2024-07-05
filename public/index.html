@@ -33,8 +33,23 @@
         .submit {
             padding: 10px;
             border: 1px solid #ccc;
-            background: #eee;
+            background-color: #28a745;
+            color: white;
             cursor: pointer;
+        }
+
+        .start {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .timeout {
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 100px;
         }
     </style>
 </head>
@@ -42,14 +57,17 @@
 <body>
     <div class="chat">
         <ul class="messages"></ul>
-        <form class="form">
-            <input class="input" autocomplete="off" />
-            <button class="submit">Send</button>
-        </form>
-        <button id="start-game">しりとりゲームを開始する</button>
+        <div class="form">
+            <input class="input" type="text" placeholder="Enter your word..." />
+            <button class="submit">Submit</button>
+        </div>
+        <div>
+            <input id="timeout" class="timeout" type="number" placeholder="Timeout (sec)" />
+            <button id="start-game" class="start">Start Game</button>
+        </div>
     </div>
 
-    <script src="client.js"></script>
+    <script src="/client.js"></script>
 </body>
 
 </html>

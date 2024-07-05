@@ -1,49 +1,42 @@
 function main() {
-  const host = location.origin.replace(/^http/, 'ws');
-  const ws = new WebSocket(host + '/ws');
-  const form = document.querySelector('.form');
-  const startGame = (timeLimit) => {
-    socket.send(JSON.stringify({ type: 'start', timeLimit }));
-};
+    const host = location.origin.replace(/^http/, 'ws');
+    const ws = new WebSocket(host + '/ws');
+    const form = document.querySelector('.form');
+    const startGameButton = document.getElementById('start-game');
+    const timeoutInput = document.getElementById('timeout');
 
-// ゲーム開始ボタンのイベントリスナー
-document.getElementById('startGameButton').addEventListener('click', () => {
-    const timeLimit = parseInt(document.getElementById('timeLimitInput').value) || 30;
-    startGame(timeLimit);
-});
+    form.onsubmit = function (e) {
+        e.preventDefault();
+        const input = document.querySelector('.input');
+        const text = input.value;
+        ws.send(JSON.stringify({ type: 'word', word: text }));
+        input.value = '';
+        input.focus();
+    };
 
+    ws.onmessage = function (msg) {
+        const response = JSON.parse(msg.data);
+        const messageList = document.querySelector('.messages');
+        const li = document.createElement('li');
 
-  form.onsubmit = function (e) {
-      e.preventDefault();
-      const input = document.querySelector('.input');
-      const text = input.value;
-      ws.send(JSON.stringify({ type: 'word', word: text }));
-      input.value = '';
-      input.focus();
-  };
+        if (response.type === 'system') {
+            li.textContent = response.message;
+        } else if (response.type === 'word') {
+            li.textContent = `${response.player}: ${response.word}`;
+        } else if (response.type === 'turn') {
+            li.textContent = response.message;
+        }
+        messageList.appendChild(li);
+    };
 
-  ws.onmessage = function (msg) {
-      const response = JSON.parse(msg.data);
-      const messageList = document.querySelector('.messages');
-      const li = document.createElement('li');
+    ws.onerror = function (error) {
+        console.error('WebSocket Error: ', error);
+    };
 
-      if (response.type === 'system') {
-          li.textContent = response.message;
-      } else if (response.type === 'word') {
-          li.textContent = `${response.player}: ${response.word}`;
-      } else if (response.type === 'turn') {
-          li.textContent = response.message;
-      }
-      messageList.appendChild(li);
-  };
-
-  ws.onerror = function (error) {
-      console.error('WebSocket Error: ', error);
-  };
-
-  document.getElementById('start-game').onclick = function () {
-      ws.send(JSON.stringify({ type: 'start' }));
-  };
+    startGameButton.onclick = function () {
+        const timeout = parseInt(timeoutInput.value) * 1000; // 秒をミリ秒に変換
+        ws.send(JSON.stringify({ type: 'start', timeout }));
+    };
 }
 
 main();
