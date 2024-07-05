@@ -9,9 +9,17 @@ let turnIndex = 0;
 let currentTimeout = null;
 let usedWords = new Set();
 let initialChar = 'し'; // Default initial character
-let wordLength = 2; // Default word length
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+const smallToLargeMap = {
+    'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 
+    'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'っ': 'つ'
+};
+
+function normalizeChar(char) {
+    return smallToLargeMap[char] || char;
+}
 
 function startNewTurn() {
     clearTimeout(currentTimeout);
@@ -48,7 +56,7 @@ wss.on('connection', (ws) => {
             startNewTurn();
         } else if (data.type === 'word') {
             const word = data.word.trim();
-            if (!/^[ぁ-ゖ]+$/.test(word)) {
+            if (!/^[ぁ-ゖー]+$/.test(word)) {
                 ws.send(JSON.stringify({ type: 'system', message: 'Words must be in hiragana only.' }));
                 return;
             }
@@ -57,14 +65,14 @@ wss.on('connection', (ws) => {
                 return;
             }
             const lastChar = initialChar;
-            const firstChar = word.charAt(0);
+            const firstChar = normalizeChar(word.charAt(0));
             if (firstChar !== lastChar) {
                 ws.send(JSON.stringify({ type: 'system', message: `Word must start with "${lastChar}".` }));
                 return;
             }
-            initialChar = word.slice(-1);
+            initialChar = normalizeChar(word.slice(-1));
             if (initialChar === 'ー') {
-                initialChar = word.slice(-2, -1);
+                initialChar = normalizeChar(word.slice(-2, -1));
             }
             if (initialChar === 'ん') {
                 ws.send(JSON.stringify({ type: 'system', message: 'You lost! Your word ended with "ん".' }));
