@@ -1,27 +1,39 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const ws = new WebSocket(`ws://${window.location.host}/shiritory`);
-    const messages = document.getElementById('messages');
-    const input = document.getElementById('input');
-    const sendButton = document.getElementById('send');
-    const startButton = document.getElementById('start');
-  
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      const messageElement = document.createElement('div');
-      messageElement.textContent = message.type === 'system' ? `システム: ${message.message}` : `${message.player}: ${message.word}`;
-      messages.appendChild(messageElement);
-    };
-  
-    sendButton.addEventListener('click', () => {
-      const word = input.value.trim();
-      if (word) {
-        ws.send(JSON.stringify({type: 'word', word}));
-        input.value = '';
+function main() {
+  const host = location.origin.replace(/^http/, 'ws');
+  const ws = new WebSocket(host + '/ws');
+  const form = document.querySelector('.form');
+
+  form.onsubmit = function (e) {
+      e.preventDefault();
+      const input = document.querySelector('.input');
+      const text = input.value;
+      ws.send(JSON.stringify({ type: 'word', word: text }));
+      input.value = '';
+      input.focus();
+  };
+
+  ws.onmessage = function (msg) {
+      const response = JSON.parse(msg.data);
+      const messageList = document.querySelector('.messages');
+      const li = document.createElement('li');
+
+      if (response.type === 'system') {
+          li.textContent = response.message;
+      } else if (response.type === 'word') {
+          li.textContent = `${response.player}: ${response.word}`;
+      } else if (response.type === 'turn') {
+          li.textContent = `あなたの番です。頭文字は「${response.firstChar}」です。`;
       }
-    });
-  
-    startButton.addEventListener('click', () => {
-      ws.send(JSON.stringify({type: 'start'}));
-    });
-  });
-  
+      messageList.appendChild(li);
+  };
+
+  ws.onerror = function (error) {
+      console.error('WebSocket Error: ', error);
+  };
+
+  document.getElementById('start-game').onclick = function () {
+      ws.send(JSON.stringify({ type: 'start' }));
+  };
+}
+
+main();
