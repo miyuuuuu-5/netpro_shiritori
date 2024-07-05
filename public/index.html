@@ -36,71 +36,20 @@
             background: #eee;
             cursor: pointer;
         }
-
-        .start {
-            padding: 10px;
-            border: 1px solid #ccc;
-            background: #eee;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
     </style>
 </head>
 
 <body>
     <div class="chat">
-        <button class="start">ゲーム開始</button>
         <ul class="messages"></ul>
         <form class="form">
             <input class="input" autocomplete="off" />
             <button class="submit">Send</button>
         </form>
+        <button id="start-game">しりとりゲームを開始する</button>
     </div>
 
-    <script>
-        function main() {
-            const host = location.origin.replace(/^http/, 'ws');
-            const ws = new WebSocket(host + '/shiritory');
-            const myId = self.crypto.randomUUID().substr(0, 8);
-
-            const form = document.querySelector('.form');
-            const startButton = document.querySelector('.start');
-            const input = document.querySelector('.input');
-            const messageList = document.querySelector('.messages');
-
-            form.onsubmit = function (e) {
-                e.preventDefault();
-                const text = input.value.trim();
-                if (text) {
-                    ws.send(JSON.stringify({ type: 'word', word: text }));
-                    input.value = '';
-                    input.focus();
-                }
-            };
-
-            startButton.addEventListener('click', () => {
-                ws.send(JSON.stringify({ type: 'start' }));
-            });
-
-            ws.onmessage = function (msg) {
-                const response = JSON.parse(msg.data);
-                const li = document.createElement('li');
-
-                if (response.type === 'system') {
-                    li.textContent = `システム: ${response.message}`;
-                } else {
-                    li.textContent = `${response.player}: ${response.word}`;
-                }
-                messageList.appendChild(li);
-            };
-
-            ws.onerror = function (error) {
-                console.error('WebSocket Error: ', error);
-            };
-        }
-
-        main();
-    </script>
+    <script src="client.js"></script>
 </body>
 
 </html>
