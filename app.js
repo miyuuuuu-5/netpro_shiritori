@@ -77,6 +77,10 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'system', message: 'You need to enter the game first.' }));
                 return;
             }
+            if (players[turnIndex] !== player) {
+                ws.send(JSON.stringify({ type: 'system', message: "It's not your turn." }));
+                return;
+            }
             const word = data.word.trim();
             if (!/^[ぁ-ゖー]+$/.test(word)) {
                 ws.send(JSON.stringify({ type: 'system', message: 'Words must be in hiragana only.' }));
