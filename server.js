@@ -38,7 +38,11 @@ function startNewTurn() {
     currentTimeout = setTimeout(() => {
         player.ws.send(JSON.stringify({ type: 'system', message: 'You lost! Time out.' }));
         players = players.filter(p => p !== player);
-        if (players.length > 1) {
+        broadcast({ type: 'system', message: `${player.name} has been eliminated!` });
+        
+        if (players.length === 1) {
+            broadcast({ type: 'system', message: `${players[0].name} is the champion! Game over.` });
+        } else if (players.length > 1) {
             turnIndex = turnIndex % players.length;
             startNewTurn();
         } else {
