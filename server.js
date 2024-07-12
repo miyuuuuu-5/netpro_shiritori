@@ -24,12 +24,30 @@ function normalizeChar(char) {
 }
 
 function getRandomHiragana() {
+    const excludedChars = ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ゃ', 'ゅ', 'ょ', 'ゎ', 'ん', 'ー'];
+
     let char;
     do {
         char = String.fromCharCode(12353 + Math.floor(Math.random() * 83));
     } while (excludedChars.includes(char));
     return char;
 }
+
+function startNewGame() {
+    // ゲーム開始時に頭文字をランダムで設定します
+    initialChar = getRandomHiragana();
+    while (initialChar === 'ん' || initialChar === 'ー') {
+        initialChar = getRandomHiragana();
+    }
+
+    // ゲーム開始のシステムメッセージを全プレイヤーに送信します
+    broadcast({ type: 'system', message: `Game starting with initial character "${initialChar}".` });
+
+    // ゲームのターンを初期化します
+    turnIndex = 0;
+    startNewTurn();
+}
+
 
 function startNewTurn() {
     clearTimeout(currentTimeout);
