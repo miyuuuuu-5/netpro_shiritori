@@ -37,18 +37,22 @@ function startNewTurn() {
     player.ws.send(JSON.stringify({ type: 'turn', message: `Your turn, ${player.name}! Start with "${initialChar}".` }));
     currentTimeout = setTimeout(() => {
         player.ws.send(JSON.stringify({ type: 'system', message: 'You lost! Time out.' }));
-        players = players.filter(p => p !== player);
-        broadcast({ type: 'system', message: `${player.name} has been eliminated!` });
-        
-        if (players.length === 1) {
-            broadcast({ type: 'system', message: `${players[0].name} is the champion! Game over.` });
-        } else if (players.length > 1) {
-            turnIndex = turnIndex % players.length;
-            startNewTurn();
-        } else {
-            broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
-        }
+        handlePlayerLoss(player);
     }, player.timeout);
+}
+
+function handlePlayerLoss(player) {
+    players = players.filter(p => p !== player);
+    broadcast({ type: 'system', message: `${player.name} has been eliminated!` });
+
+    if (players.length === 1) {
+        broadcast({ type: 'system', message: `${players[0].name} is the champion! Game over.` });
+    } else if (players.length > 1) {
+        turnIndex = turnIndex % players.length;
+        startNewTurn();
+    } else {
+        broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
+    }
 }
 
 function broadcast(message) {
@@ -106,13 +110,7 @@ wss.on('connection', (ws) => {
             }
             if (initialChar === 'ん') {
                 ws.send(JSON.stringify({ type: 'system', message: 'You lost! Your word ended with "ん".' }));
-                players = players.filter(p => p !== player);
-                if (players.length > 1) {
-                    turnIndex = turnIndex % players.length;
-                    startNewTurn();
-                } else {
-                    broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
-                }
+                handlePlayerLoss(player);
                 return;
             }
             usedWords.add(word);
