@@ -42,14 +42,22 @@ function startNewTurn() {
 }
 
 function handlePlayerLoss(player) {
+    // プレイヤーを players 配列からフィルタリングして削除します
     players = players.filter(p => p !== player);
-    broadcast({ type: 'system', message: `${player.name} has been eliminated!` });
 
-    if (players.length === 1) {
-        broadcast({ type: 'system', message: `${players[0].name} is the champion! Game over.` });
-    } else if (players.length === 0) {
-        broadcast({ type: 'system', message: 'End of game.' });
-    }
+    // 脱落したプレイヤーに脱落のメッセージを送信します
+    player.ws.send(JSON.stringify({ type: 'system', message: 'You lost!' }));
+
+    // 残りのプレイヤーに勝利のメッセージを送信します
+    players.forEach(p => {
+        p.ws.send(JSON.stringify({ type: 'system', message: `${player.name} has been eliminated! You are the winner!` }));
+    });
+
+    // ゲームが終了したことを全プレイヤーに通知します
+    broadcast({ type: 'system', message: 'Game over.' });
+
+    // players 配列を空にします
+    players = [];
 }
 
 function broadcast(message) {
