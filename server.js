@@ -47,11 +47,8 @@ function handlePlayerLoss(player) {
 
     if (players.length === 1) {
         broadcast({ type: 'system', message: `${players[0].name} is the champion! Game over.` });
-    } else if (players.length > 1) {
-        turnIndex = turnIndex % players.length;
-        startNewTurn();
-    } else {
-        broadcast({ type: 'system', message: 'Game over. Not enough players to continue.' });
+    } else if (players.length === 0) {
+        broadcast({ type: 'system', message: 'End of game.' });
     }
 }
 
