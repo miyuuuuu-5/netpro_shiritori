@@ -38,14 +38,13 @@ function main() {
 
         if (response.type === 'system') {
             li.textContent = response.message;
-            if (response.message.includes('制限時間は')) {
-                const timeout = parseInt(response.message.match(/制限時間は(\d+)秒/)[1]) * 1000;
-                startTimer(timeout);
-            }
         } else if (response.type === 'word') {
             li.textContent = `${response.player}: ${response.word}`;
         } else if (response.type === 'turn') {
             li.textContent = response.message;
+            if (response.timeout) {
+                startTimer(response.timeout);
+            }
         }
         messageList.appendChild(li);
     };

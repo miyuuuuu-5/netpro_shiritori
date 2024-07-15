@@ -51,7 +51,7 @@ function startNewGame() {
 function startNewTurn() {
     clearTimeout(currentTimeout); // 現在のタイムアウトをクリア
     const player = players[turnIndex];  // 現在のターンのプレイヤーを取得
-    player.ws.send(JSON.stringify({ type: 'turn', message: `${player.name}さんの番です！「${initialChar}」で始めてください。` }));
+    player.ws.send(JSON.stringify({ type: 'turn', message: `${player.name}さんの番です！「${initialChar}」で始めてください。`, timeout: player.timeout }));
     // プレイヤーにターン開始のメッセージを送信
 
     currentTimeout = setTimeout(() => {
@@ -61,6 +61,7 @@ function startNewTurn() {
         handlePlayerLoss(player);
     }, player.timeout);
 }
+
 
 function handlePlayerLoss(player) {
     players = players.filter(p => p !== player); // プレイヤーを players 配列から削除
