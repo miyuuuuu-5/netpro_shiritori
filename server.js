@@ -55,7 +55,7 @@ function startNewTurn() {
     // プレイヤーにターン開始のメッセージを送信
 
     currentTimeout = setTimeout(() => {
-        player.ws.send(JSON.stringify({ type: 'system', message: '時間切れ！あなたの負けです。' }));
+        player.ws.send(JSON.stringify({ type: 'system', message: '時間切れ！' }));
         // タイムアウトメッセージをプレイヤーに送信
 
         handlePlayerLoss(player);
@@ -136,7 +136,7 @@ wss.on('connection', (ws) => {
                 initialChar = normalizeChar(word.slice(-2, -1));
             }
             if (initialChar === 'ん') {
-                ws.send(JSON.stringify({ type: 'system', message: '「ん」がつきました！あなたの負けです！' }));
+                ws.send(JSON.stringify({ type: 'system', message: '「ん」がつきました！' }));
                 handlePlayerLoss(player);
                 return;
             }

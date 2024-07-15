@@ -7,7 +7,7 @@ function main() {
     const timeoutInput = document.getElementById('timeout');
     const nameInput = document.getElementById('name');
     const entryButton = document.getElementById('entry');
-    const submitButton = document.querySelector('.submit'); // 追加
+    const submitButton = document.querySelector('.submit');
 
     form.onsubmit = function (e) {
         e.preventDefault();
@@ -17,6 +17,7 @@ function main() {
         input.focus();
     };
 
+    // Enterキー押下時の処理
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -24,16 +25,19 @@ function main() {
         }
     });
 
-    submitButton.onclick = function (e) { // 追加
+    // 送信ボタン押下時の処理
+    submitButton.onclick = function (e) {
         e.preventDefault();
         form.onsubmit(e);
     };
 
+    // サーバーからのメッセージ受信時の処理
     ws.onmessage = function (msg) {
         const response = JSON.parse(msg.data);
         const messageList = document.querySelector('.messages');
         const li = document.createElement('li');
 
+        // メッセージの種類ごとに内容を設定
         if (response.type === 'system') {
             li.textContent = response.message;
         } else if (response.type === 'word') {
@@ -44,6 +48,7 @@ function main() {
         messageList.appendChild(li);
     };
 
+    // エントリーボタン押下時の処理
     ws.onerror = function (error) {
         console.error('WebSocket Error: ', error);
     };
@@ -51,7 +56,7 @@ function main() {
     entryButton.onclick = function () {
         const name = nameInput.value.trim();
         if (!name) {
-            alert('Please enter your name.');
+            alert('名前を入力してください！');
             return;
         }
         ws.send(JSON.stringify({ type: 'entry', name }));
@@ -60,7 +65,7 @@ function main() {
     startGameButton.onclick = function () {
         let timeout = parseInt(timeoutInput.value);
         if (isNaN(timeout) || timeout <= 0) {
-            alert('Please enter a valid positive number for the timeout.');
+            alert('自然数を入力してください！');
             return;
         }
         timeout = timeout * 1000; // 秒をミリ秒に変換
