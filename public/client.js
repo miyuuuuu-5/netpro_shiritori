@@ -54,17 +54,33 @@ function main() {
     };
     
     // タイマーを開始する関数
-    function startTimer(timeout) {
-        let timeLeft = timeout;
-        const timerElement = document.createElement('div');
-        timerElement.className = 'timer';
-        timerElement.textContent = `残り時間: ${timeLeft}秒`;
-        document.body.appendChild(timerElement);
+    // function startTimer(timeout) {
+    //     let timeLeft = timeout;
+    //     const timerElement = document.createElement('div');
+    //     timerElement.className = 'timer';
+    //     timerElement.textContent = `残り時間: ${timeLeft}秒`;
+    //     document.body.appendChild(timerElement);
     
-        const timerInterval = setInterval(() => {
+    //     const timerInterval = setInterval(() => {
+    //         timeLeft -= 1;
+    //         timerElement.textContent = `残り時間: ${timeLeft}秒`;
+    
+    //         if (timeLeft <= 0) {
+    //             clearInterval(timerInterval);
+    //             timerElement.textContent = '時間切れ！';
+    //         }
+    //     }, 1000);
+    // }
+
+    function startTimer(timeout) {
+        clearInterval(timerInterval);
+        let timeLeft = timeout;
+        timerElement.textContent = `残り時間: ${timeLeft}秒`;
+
+        timerInterval = setInterval(() => {
             timeLeft -= 1;
             timerElement.textContent = `残り時間: ${timeLeft}秒`;
-    
+
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 timerElement.textContent = '時間切れ！';

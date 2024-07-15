@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,7 +10,6 @@
             flex-direction: column;
             height: 100vh;
         }
-
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -19,17 +17,14 @@
             padding: 0;
             margin: 0;
         }
-
         .form {
             display: flex;
         }
-
         .input {
             flex: 1;
             padding: 10px;
             border: 1px solid #ccc;
         }
-
         .submit {
             padding: 10px;
             border: 1px solid #ccc;
@@ -37,7 +32,6 @@
             color: white;
             cursor: pointer;
         }
-
         .start, .entry {
             padding: 10px;
             border: 1px solid #ccc;
@@ -46,31 +40,34 @@
             cursor: pointer;
             margin-top: 5px;
         }
-
         .timeout {
             padding: 10px;
             border: 1px solid #ccc;
             width: 100px;
         }
+        .timer {
+            font-size: 20px;
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
-
 <body>
     <div class="chat">
         <ul class="messages"></ul>
         <div class="form">
-            <input class="input" type="text" placeholder="ひらがなで入力してください" />
+            <input class="input" type="text" placeholder="Enter your word..." />
             <button class="submit">送信</button>
         </div>
         <div>
-            <input id="name" class="input" type="text" placeholder="プレイヤー名" />
+            <input id="name" class="input" type="text" placeholder="Your name" />
             <button id="entry" class="entry">エントリー</button>
-            <input id="timeout" class="timeout" type="number" placeholder="制限時間 (秒)" />
+            <input id="timeout" class="timeout" type="number" placeholder="Timeout (sec)" />
             <button id="start-game" class="start">ゲームスタート</button>
         </div>
+        <div class="timer" id="timer">残り時間: --秒</div>
     </div>
-
     <script src="/client.js"></script>
 </body>
-
 </html>
