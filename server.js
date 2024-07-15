@@ -63,6 +63,7 @@ function startNewTurn() {
 }
 
 
+
 function handlePlayerLoss(player) {
     players = players.filter(p => p !== player); // プレイヤーを players 配列から削除
     player.ws.send(JSON.stringify({ type: 'system', message: 'あなたの負けです!' })); // 脱落したプレイヤーに脱落のメッセージを送信

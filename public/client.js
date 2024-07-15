@@ -44,6 +44,8 @@ function main() {
             li.textContent = response.message;
             if (response.timeout) {
                 startTimer(response.timeout);
+            } else {
+                resetTimerDisplay();
             }
         }
         messageList.appendChild(li);
@@ -86,6 +88,11 @@ function main() {
                 timerElement.textContent = '時間切れ！';
             }
         }, 1000);
+    }
+
+    function resetTimerDisplay() {
+        clearInterval(timerInterval);
+        timerElement.textContent = '残り時間: --秒';
     }
 }
 
