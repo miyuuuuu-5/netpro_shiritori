@@ -17,6 +17,7 @@ function main() {
         ws.send(JSON.stringify({ type: 'word', word: text }));
         input.value = '';
         input.focus();
+        resetTimerDisplay(); // 相手のターンになるのでタイマー表示をリセット
     };
 
     input.addEventListener('keydown', function (e) {
