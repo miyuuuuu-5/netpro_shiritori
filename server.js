@@ -100,12 +100,14 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'system', message: 'まずはエントリーしましょう！' }));
                 return;
             }
-            player.timeout = data.timeout;
+            const timeout = data.timeout;
+            players.forEach(p => p.timeout = timeout); // すべてのプレイヤーに対して制限時間を設定
             initialChar = getRandomHiragana();
-            broadcast({ type: 'system', message: `ゲームスタート！初めの文字は「${initialChar}」です。制限時間は${player.timeout / 1000}秒！` });
+            broadcast({ type: 'system', message: `ゲームスタート！初めの文字は「${initialChar}」です。制限時間は${timeout / 1000}秒！` });
             turnIndex = 0;
             startNewTurn();
-        } 
+        }
+        
         // プレイヤーの単語提出メッセージを受信した場合の処理
         else if (data.type === 'word') {
             if (!player.isEntered) {
