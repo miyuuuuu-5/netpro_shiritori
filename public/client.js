@@ -20,6 +20,7 @@ function main() {
         resetTimerDisplay(); // 相手のターンになるのでタイマー表示をリセット
     };
 
+    // Enterキー押下時の処理
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -27,11 +28,13 @@ function main() {
         }
     });
 
+    // 送信ボタン押下時の処理
     submitButton.onclick = function (e) {
         e.preventDefault();
         form.onsubmit(e);
     };
 
+    // サーバーからのメッセージ受信時の処理
     ws.onmessage = function (msg) {
         const response = JSON.parse(msg.data);
         const messageList = document.querySelector('.messages');
