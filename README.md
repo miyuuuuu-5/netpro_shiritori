@@ -5,13 +5,16 @@ Siritori Game は、言葉の連鎖ゲームである「しりとり」をウェ
 
 ## ディレクトリ構造
 ```
-siritori/
-├── server.js          # サーバーサイドのロジック
+netpro_shiritori/
+├── server.js # サーバーサイドのロジック
 ├── public/
-│   ├── index.html     # クライアントサイドのHTMLファイル
-│   └── client.js      # クライアントサイドのJavaScriptファイル
-├── yarn.lock          # Yarnの依存関係ファイル
-└── package.json       # プロジェクトの依存関係とスクリプト
+│ ├── index.html # クライアントサイドのHTMLファイル
+│ └── client.js # クライアントサイドのJavaScriptファイル
+├── yarn.lock # Yarnの依存関係ファイル
+├── LICENSE # プロジェクトのライセンス情報
+├── README.md # プロジェクトの概要と使用方法を記載したファイル
+├── .gitignore # Gitで追跡しないファイルやディレクトリを指定するファイル
+└── package.json # プロジェクトの依存関係とスクリプト
 ```
 
 ## セットアップ手順
